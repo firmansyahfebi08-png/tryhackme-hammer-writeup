@@ -53,17 +53,17 @@ Kami menemukan beberapa halaman dan direktori. Di antara mereka PhpMyAdmin. Jadi
 
 
 Mengunjungi halaman indeks dengan pencacahan manual membawa kita langsung ke halaman login. 
-![Halaman web login hammer thm](halamanwebloginhammer%20thm.png)
+![Halaman Web Login Hammer THM](halaman%20web%20login%20hammer%20thm.png)
 
 Dalam sumbernya, kita menemukan konvensi yang disebutkan di antara para direktori. Ini dimulai dengan hmr_.
-![Endpoint hammer thm](endpointnhammer%20thm.png)
+![Endpoint Hammer THM](endpoint%20hammer%20thm.png)
 
 Jadi kita mengedit wordlist bekas dengan melakukan prepending  hmr_dan scan lagi.
 
 cp /usr/share/wordlists/dirb/big.txt .
 sed 's/^/hmr_/' big.txt > hmr_big.txt
 
-![Feroxbuster2](feroxbuster2%20.png)
+![Feroxbuster](feroxbuster2.png)
 
 Kami sekarang menemukan direktori hmr_logs, yang memiliki daftar direktori diaktifkan. Direktori ini berisi  error.logsberkas.
 
@@ -75,7 +75,7 @@ Kami sekarang menemukan direktori hmr_logs, yang memiliki daftar direktori diakt
 ## 3. Melewati Login
 
 Dengan informasi yang kami kumpulkan sejauh ini, kami sekarang harus berkonsentrasi pada login.
-![Halaman web login hammer thm](halamanwebloginhammer%20thm.png)
+![Halaman Web Login Hammer THM](halaman%20web%20login%20hammer%20thm.png)
 
 ---
 
@@ -83,40 +83,40 @@ Dengan informasi yang kami kumpulkan sejauh ini, kami sekarang harus berkonsentr
 
 Ini hanya menampilkan pesan generik untuk email dan kata sandi yang dimasukkan, dari mana kita tidak dapat menyimpulkan bahwa email atau kata sandi yang salah telah dimasukkan. Kekuatan kasar murni untuk menghitung email karena itu tidak mungkin di sini.
 Tetapi halaman login memiliki tautan ke fitur kata sandi yang terlupakan /reset_password.php. Ini memberikan pesan kesalahan jika surat yang dipilih salah, secara teoritis surat yang valid dapat disebutkan dengan cara ini.
-![End point reset password](endpointreset%20password.png)
+![End Point Reset Password](end-point-reset-password.png)
 
 ---
 
 ## 5.Mendapatkan Alamat E-Mail yang Valid
 
 Mengingatkan pencairan menggunakan daftar kata yang ditempati kami dapat menemukan email di   error.logs.Ada kegagalan otentikasi untuk pengguna tester@hammer.thm.
-![End point log login](endpointlog%20login.png)
+![End Point Log Login](end%20point%20log%20login.png)
 
 ---
 
 ## 6. Eksploitasi Fitur Reset Password
 
 Ketika mencoba untuk mengatur ulang password untuk pengguna ini, ...
-![Halaman reset password udah dapetunsername](halamanrestepassword%20udahdapetunsername.png)
+![Halaman Reset Password Udah Dapet Username](halaman%20reset%20password%20udah%20dapetusername.png
 
 ... penyedap halaman dan kita harus memasukkan kode 4 digit untuk mengubah kata sandi. Selain itu, ada batas waktu  180beberapa detik untuk memasukkan kode ini. Untuk prosedur dan analisis lebih lanjut, kami mencegat pengiriman kode 4 digit menggunakan burp suite.
-![Burpsuite1](burpsuite1%20.png)
+![Burp Suite 1](burpsuite1.png)
 
 Dengan setiap permintaan yang sekarang dibuat, nilai Rate-Limit-Pending dalam header respons berkurang. Awalnya ini dimulai pada 8.
-![Burp suite2](burpsuite2%20.png)
+![Burp Suite 2](burp%20suite2.png)
 
 Setelah nilai turun ke 0Batas tarif tercapai dan token tidak dapat diatur ulang. Pada titik ini saya kehilangan banyak waktu karena saya berpikir bahwa dengan setiap reset token juga akan diatur ulang. Di bawah asumsi ini, saya pikir saya hanya bisa mendapatkan token dengan sedikit keberuntungan dan kesempatan. 
 
 Oleh karena itu, saya menulis naskah yang membuat  100permintaan pada saat yang sama dengan berbeda PHPSESSIDs dengan harapan mendapatkan reset yang valid dengan token reset tetap. Bahkan, setelah beberapa upaya saya memiliki token permintaan yang valid, tetapi  100respon yang sama, untuk setiap sesi token tetap adalah valid. 
 
 Baru kemudian saya menyadari bahwa token bertahan dalam jangka waktu itu selama setiap sesi yang dibuat, dan tidak mengatur ulang dirinya dengan sesi baru. Asumsi dapat dibuat dengan melihat bahwa token bertahan  180detik.
-![Burp suite3](burpsuite3%20.png)
+![Burp Suite 3](burp%20suite3.png)
 
 Untuk memverifikasi bahwa token reset bertahan, kami meminta reset baru tanpa cookie untuk mendapatkan sesi baru.
-![Burp suite4](burpsuite4%20.png)
+![Burp Suite 4](burp%20suite4.png)
 
 Kemudian kita menempatkan  PHPSESSIDdari respon ke dalam permintaan kami, dan melihat bahwa kita memiliki 8 upaya lagi, sampai  180Detik sudah berlalu.
-![Burp suite5](burpsuite5%20.png)
+![Burp Suite 5](burp%20suite5.png)
 
 Dengan informasi yang kami miliki, kami dapat mengotomatiskan proses pemulihan kata sandi yang melanggar brute. Pertama kali meminta reset kata sandi dan mengambil  PHPSESSIDcookie, kemudian secara berulang kali mengirimkan kode pemulihan dengan cara brute-force, secara berkala menyegarkan  PHPSESSIDsetiap permintaan ketujuh. Skrip mendeteksi pengiriman kode yang sukses dengan memeriksa perubahan dalam jumlah kata teks respons.
 
@@ -186,21 +186,21 @@ Dengan informasi yang kami miliki, kami dapat mengotomatiskan proses pemulihan k
 
 
 Setelah kami menjalankan naskah, kami menerima kode pemulihan yang valid,  PHPSESSIDdan tubuh respon.
-![Script python brup](scriptpython%20brup.png)
+![Script Python Burp](script%20python%20brup.png)
 
 ---
 
 ## 7. Atur Ulang Kata Sandi
 
 Yang harus kita lakukan sekarang adalah mengatur PHPSESSID di browser dan memuat ulang halaman.Setelah kami memuat ulang halaman, kami dapat mengatur ulang kata sandi untuk pengguna tester@hammer.thm.
-![Web bikin pass baru](webbikinpass%20baru.png)
+![Web Bikin Password Baru](web%20bikin%20pass%20baru.png)
 
 Kami memilih password baru.Kami kemudian login dengan kredensial baru ...
 ... dan diteruskan ke dashboard. Kami melihat bahwa kami memiliki peran user, dapat memasuki perintah dan disambut dengan bendera pertama. Setelah waktu yang singkat, kita akan keluar.
 
 
 ... dan diteruskan ke dashboard. Kami melihat bahwa kami memiliki peran user, dapat memasuki perintah dan disambut dengan bendera pertama. Setelah waktu yang singkat, kita akan keluar.
-![Halaman login menggunakan username](halamanloginmenggunakan%20username.png)
+![Halaman Login Menggunakan Username](halaman%20login%20menggunakan%20usrname.png)
 
 
 ---
@@ -208,27 +208,28 @@ Kami memilih password baru.Kami kemudian login dengan kredensial baru ...
 ## 8. RCE
 
 Pertama kita melihat apa yang memungkinkan kita log out, dalam sumber kita melihat script yang memeriksa cookie setelah interval dan jika kondisi tidak terpenuhi, kita login keluar. Jika jika  persistentSessiontidak diatur ke True, kita akan ditebang. Dengan menggunakan alat OWASP ZAP, kami dapat menetapkan nilai ini secara permanen, tetapi kami juga dapat melanjutkan penyelidikan kami menggunakan Burp Suite tanpa dilunasmi.
-![Ctrl u di halaman web yg sudah login](ctrludihalamanwebygsudah%20login.png)
+![Ctrl U Halaman Web Sudah Login](ctrl%20u%20di%20halaman%20web%20yg%20sudah%20login.png)
 
 Selain itu, ada naskah yang mendengarkan acara klik pada  #submitCommandtombol dan mengambil input perintah oleh pengguna. Kemudian mengirimkan permintaan AJAX POST ke execute_command.php, termasuk perintah dan token JWT di header permintaan untuk otorisasi. Setelah menerima tanggapan, ia menampilkan hasil atau pesan kesalahan dalam  #commandOutputelemen. Skrip ini bertanggung jawab atas transmisi perintah.
-![Jwt token](jwt%20token.png)
+![JWT Token](jwt%20token.png)
 
 ---
 
 ## 9. Analisis Perintah Eksekusi
 
 Kami mencegat permintaan untuk mentransfer perintah menggunakan Burp Suite. Kami melihat token di header dan di cookie. Selain itu, kami tidak diizinkan untuk melaksanakan perintah ID. Kami menggunakan FFuF dengan daftar kata untuk memeriksa perintah mana yang dapat digunakan.
-![Burp suite6](burpsuite6%20.png)
+![Burp Suite 6](brup%20suite6.png)
+
 
 Berkas Kunci
 
 Tampaknya kita hanya bisa mengeksekusi perintah mereka. Selain halaman dan direktori yang sudah kita ketahui ada  .keyfile yang hadir. Kami ingat bahwa peran pengguna kami ditampilkan di dasbor. Ada kemungkinan bahwa peran lain dapat mengeksekusi lebih banyak.
-![Burp suite7](burpsuite7%20.png)
+![Burp Suite 7](brup%20suite7.png)
 
 Penciptaan Token JWT
 
 Kami menganalisis token JWT menggunakan  jwt.iodan dapat membuat struktur, di header a  kiddiatur, yang menunjuk ke file kunci yang terletak di  /var/www/mykey.key. Selanjutnya token berisi pengguna peran. Mungkin dengan peran lain seperti admin kita akan dapat melaksanakan perintah sewenang-wenang.
-![Jwtio1](jwtio1%20.png)
+![JWT IO 1](jwtio1.png)
 
 Kami ingat daftar kami  lsperintah, di sini kita punya file kunci. File kunci berisi nilai hash. Mungkin rahasia untuk menandatangani token JWT. Jadi kita mungkin bisa membuat token kita sendiri, karena kita memiliki akses ke rahasia dan dapat menebak lokasi token untuk anak itu.
 
@@ -266,18 +267,18 @@ Kami menggunakan skrip python untuk membuat token dengan peran admin, kami memas
 	print(token)
 
 Menjalankan script, kita mendapatkan token, ditandatangani dengan rahasia, yang terletak di folder root web.
-![Run script jwt](runscript%20jwt.png)
+![Run Script JWT](run%20script%20jwt.png)
 
 Menggunakan jwt.ioKami dapat mengkonfirmasi konten barunya.
-![Jwtio2](jwtio2%20.png)
+![JWT IO 2](jwtio2.png)
 
 Eksekusi Kode Jarak Jauh Sewenang-wenang
 
 Selanjutnya, kami mengganti nilai token dalam header Otorisasi dan nilai cookie token. Setelah itu, kami dapat melaksanakan perintah sewenang-wenang sebagai admin. Dengan menggunakan ID yang kita lihat, kita www-data.
-![Burp suite8](burpsuite8%20.png)
+![Burp Suite 8](brup%20suite8.png)
 
 Sebagai sebagai  www-datakita dapat mengambil bendera kedua di /home/ubuntu.flag.txt
-![Burp suite9](burpsuite9%20.png)
+![Burp Suite 9](brup%20suite9.png)
 
 Ringkasan
 
